@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TR-909 Permutations</title>
   <style>
+      @font-face {
+  font-family: 'peeps';
+  src: url('fonts/peeps.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+      
     body {
       margin: 0;
       padding: 0;
@@ -52,6 +60,27 @@
   opacity: 1;
 }
 
+      #bg-text,
+.bg-line {
+  font-family: 'peeps', monospace;
+}
+
+body::before {
+  content: "ALL POSSIBLE PERMUTATIONS OF THE ELEVEN ONBOARD SOUNDS OF THE ROLAND TR-909.          MASSIVE THANKS: GUY BIRKIN, ARNAU HORTA, ANDREW FENCHEL, BORJA CARO, HUGO ESQUINCA, HAMPUS LINDVALL.           2021-2025 ROC JIMENEZ DE CISNEROS";
+  position: fixed;
+  top: 50;
+  left: 50;
+  width: 100%;
+  height: 100%;
+  font-family: 'peeps';
+  font-size: 8.5vw;
+  color: rgba(255,255,255,0.035);
+  pointer-events: none;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  z-index: 0;
+}
+      
   </style>
 </head>
 <body>
