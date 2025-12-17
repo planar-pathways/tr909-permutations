@@ -1,169 +1,167 @@
-// ----------------------------
-// CONFIGURATION
-// ----------------------------
+// =======================
+// CONFIG
+// =======================
 
-const NUM_SOUNDS = 11;
-const STEPS_PER_PATTERN = 11;
-const STEP_DURATION = 0.125; // seconds
-const LOOKAHEAD = 0.1;       // seconds
+const NUM_SOUNDS = 11; 
+const STEP_MS = 150;
 
-// ----------------------------
-// AUDIO SETUP
-// ----------------------------
+// =======================
+// UTILS
+// =======================
 
-let audioCtx = null;
-let buffers = [];
-let isPlaying = false;
-
-// ----------------------------
-// PERMUTATION STATE
-// ----------------------------
-
-let permutation = Array.from({ length: NUM_SOUNDS }, (_, i) => i);
-let permutationIndex = 0;
-
-// ----------------------------
-// UI
-// ----------------------------
-
-const startBtn = document.getElementById("startBtn");
-const counterEl = document.getElementById("counter");
-
-startBtn.addEventListener("click", async () => {
-  if (!audioCtx) {
-    await initAudio();
-  }
-
-  if (audioCtx.state === "suspended") {
-    await audioCtx.resume();
-  }
-
- if (!isPlaying) {
-  // ---- PLAY ----
-  isPlaying = true;
-  startBtn.textContent = "STOP";
-
-  // hard reset scheduler state
-  nextEventTime = 0;
-  stepIndex = 0;
-
-  startScheduler();
-} else {
-  // ---- STOP ----
-  isPlaying = false;
-  startBtn.textContent = "PLAY";
-  stopScheduler();
+function factorial(n) {
+  let r = 1;
+  for (let i = 2; i <= n; i++) r *= i;
+  return r;
 }
-});
 
-// ----------------------------
-// INITIALIZATION
-// ----------------------------
+const TOTAL_PERMUTATIONS = factorial(NUM_SOUNDS);
 
-async function initAudio() {
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// =======================
+// AUDIO
+// =======================
 
-  const promises = [];
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const buffers = [];
 
+async function loadSamples() {
   for (let i = 1; i <= NUM_SOUNDS; i++) {
-    const n = String(i).padStart(2, "0");
-    const url = `samples/${n}.wav`;
-
-    promises.push(
-      fetch(url)
-        .then(res => res.arrayBuffer())
-        .then(data => audioCtx.decodeAudioData(data))
-    );
+    const num = String(i).padStart(2, "0");
+    const res = await fetch(`samples/${num}.wav`);
+    const arrayBuffer = await res.arrayBuffer();
+    buffers.push(await audioCtx.decodeAudioData(arrayBuffer));
   }
-
-  buffers = await Promise.all(promises);
 }
 
-// ----------------------------
-// PERMUTATION LOGIC
-// ----------------------------
+function playSound(index) {
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffers[index];
+  src.connect(audioCtx.destination);
+  src.start();
+}
+
+// =======================
+// PERMUTATIONS
+// =======================
 
 function nextPermutation(arr) {
-  let i = arr.length - 2;
-  while (i >= 0 && arr[i] >= arr[i + 1]) i--;
+  const a = arr.slice();
 
-  if (i < 0) {
-    arr.reverse();
-    return false;
-  }
+  let i = a.length - 2;
+  while (i >= 0 && a[i] >= a[i + 1]) i--;
+  if (i < 0) return a.slice(); // wrap (cyclic)
 
-  let j = arr.length - 1;
-  while (arr[j] <= arr[i]) j--;
+  let j = a.length - 1;
+  while (a[j] <= a[i]) j--;
 
-  [arr[i], arr[j]] = [arr[j], arr[i]];
+  [a[i], a[j]] = [a[j], a[i]];
 
-  let left = i + 1;
-  let right = arr.length - 1;
+  let left = i + 1,
+    right = a.length - 1;
   while (left < right) {
-    [arr[left], arr[right]] = [arr[right], arr[left]];
+    [a[left], a[right]] = [a[right], a[left]];
     left++;
     right--;
   }
 
-  return true;
+  return a;
 }
 
-// ----------------------------
-// SCHEDULER (background-safe)
-// ----------------------------
+// =======================
+// STATE
+// =======================
 
-let nextEventTime = 0;
+let initialPermutation = [];
+for (let i = 0; i < NUM_SOUNDS; i++) initialPermutation.push(i);
+
+let currentPermutation = initialPermutation.slice();
+let permutationIndex = 0;
 let stepIndex = 0;
-let schedulerTimer = null;
 
-function scheduler() {
+let isPlaying = false;
+let timerId = null;
+let endedNaturally = false;
+
+
+// =======================
+// UI
+// =======================
+
+const startBtn = document.getElementById("startBtn");
+const counterEl = document.getElementById("counter");
+
+counterEl.textContent = "PERMUTATION: 0";
+
+// =======================
+// SCHEDULER
+// =======================
+
+function tick() {
   if (!isPlaying) return;
 
-  const now = audioCtx.currentTime;
+  playSound(currentPermutation[stepIndex]);
+  stepIndex++;
 
-  if (nextEventTime === 0) {
-    nextEventTime = now + 0.05;
-  }
+  if (stepIndex >= currentPermutation.length) {
+    stepIndex = 0;
 
-  while (nextEventTime < now + LOOKAHEAD) {
-    scheduleStep(stepIndex, nextEventTime);
-
-    stepIndex++;
-
-    if (stepIndex >= STEPS_PER_PATTERN) {
-      stepIndex = 0;
-      advancePermutation();
+    // END CHECK
+    if (permutationIndex >= TOTAL_PERMUTATIONS - 1) {
+  endedNaturally = true;
+  stopPlayback();
+  return;
     }
 
-    nextEventTime += STEP_DURATION;
+
+    currentPermutation = nextPermutation(currentPermutation);
+    permutationIndex++;
+    counterEl.textContent = `PERMUTATION: ${permutationIndex}`;
   }
 }
 
-function startScheduler() {
-  if (schedulerTimer !== null) return;
+function startPlayback() {
+  if (isPlaying) return;
 
-  // run scheduler regularly, even when tab is unfocused
-  schedulerTimer = setInterval(scheduler, 25);
+  audioCtx.resume();
+  isPlaying = true;
+  endedNaturally = false;
+  startBtn.textContent = "STOP";
+
+  timerId = setInterval(tick, STEP_MS);
 }
 
-function stopScheduler() {
-  if (schedulerTimer !== null) {
-    clearInterval(schedulerTimer);
-    schedulerTimer = null;
+
+function stopPlayback() {
+  isPlaying = false;
+  clearInterval(timerId);
+  timerId = null;
+
+  if (endedNaturally) {
+    permutationIndex = 0;
+    stepIndex = 0;
+    currentPermutation = initialPermutation.slice();
+    counterEl.textContent = "PERMUTATION: 0";
+    endedNaturally = false;
   }
-  nextEventTime = 0;
+
+  startBtn.textContent = "PLAY";
 }
 
-function scheduleStep(step, time) {
-  const soundIndex = permutation[step];
-  const source = audioCtx.createBufferSource();
-  source.buffer = buffers[soundIndex];
-  source.connect(audioCtx.destination);
-  source.start(time);
-}
 
-function advancePermutation() {
-  nextPermutation(permutation);
-  permutationIndex++;
-  counterEl.textContent = `PERMUTATION: ${permutationIndex}`;
-}
+// =======================
+// EVENTS
+// =======================
+
+startBtn.onclick = () => {
+  if (!isPlaying) {
+    startPlayback();
+  } else {
+    stopPlayback();
+  }
+};
+
+// =======================
+// INIT
+// =======================
+
+loadSamples();

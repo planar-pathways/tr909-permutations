@@ -8,7 +8,7 @@
     body {
       margin: 0;
       padding: 0;
-      background: #000;
+      background: linear-gradient(to right, #fe52a7, green);
       color: #fff;
       font-family: monospace;
       display: flex;
@@ -27,9 +27,31 @@
       cursor: pointer;
     }
     #counter {
-      font-size: 33px;
+      font-size: 43px;
       opacity: 1;
     }
+      #logo-link {
+  position: fixed;
+  bottom: 15px;
+  align-items: center;
+}
+
+#logo {
+  width: 260px;           
+  height: auto;
+  opacity: 0;          
+  cursor: pointer;
+  transition: opacity 0.3s ease; 
+}
+
+#logo:hover {
+  opacity: 1;             
+}
+      
+#logo:active {
+  opacity: 1;
+}
+
   </style>
 </head>
 <body>
@@ -39,5 +61,10 @@
   </div>
 
   <script src="main.js"></script>
+<a href="http://vivapunani.org" target="_blank" id="logo-link">
+  <img src="images/mentasmic-white.svg" alt="Logo" id="logo">
+</a>
+
+    
 </body>
 </html>
