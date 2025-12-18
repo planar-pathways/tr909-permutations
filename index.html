@@ -66,7 +66,7 @@
 }
 
 body::before {
-  content: "ALL POSSIBLE PERMUTATIONS OF THE ELEVEN ONBOARD SOUNDS OF THE ROLAND TR-909.          MASSIVE THANKS: GUY BIRKIN, ARNAU HORTA, ANDREW FENCHEL, BORJA CARO, HUGO ESQUINCA, HAMPUS LINDVALL.           2021-2025 ROC JIMENEZ DE CISNEROS";
+  content: "ALL POSSIBLE PERMUTATIONS OF THE ELEVEN ONBOARD SOUNDS OF THE ROLAND TR-909. KICK, SNARE DRUM, LOW TOM, MID TOM, HI TOM, CLAP, RIM SHOT, OPEN HAT, CLOSED HAT, RIDE, CRASH.          MASSIVE THANKS: GUY BIRKIN, ARNAU HORTA, ANDREW FENCHEL, BORJA CARO, HUGO ESQUINCA, HAMPUS LINDVALL.           2021-2025 ROC JIMENEZ DE CISNEROS";
   position: fixed;
   top: 50;
   left: 50;
@@ -81,6 +81,47 @@ body::before {
   z-index: 0;
 }
       
+  #peek-image {
+  position: fixed;
+  bottom: -163px;          /* start hidden below screen */
+  right: 30px;             /* choose side: left or right */
+  width: 120px;            /* adjust size */
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+
+  animation: peekUp 12s ease-in-out 2s forwards;
+}
+     
+@keyframes peekUp {
+  0% {
+    transform: translateY(20);
+    opacity: 1;
+  }
+    
+  20% {
+    transform: translateY(-77px);
+    opacity: 1;
+  }
+
+  40% {
+    transform: translateY(-77px);
+    opacity: 1;
+  }
+
+  60% {
+    transform: translateY(-77px);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+      
+      
   </style>
 </head>
 <body>
@@ -93,6 +134,8 @@ body::before {
 <a href="http://vivapunani.org" target="_blank" id="logo-link">
   <img src="images/mentasmic-white.svg" alt="Logo" id="logo">
 </a>
+
+<img src="images/peek.png" id="peek-image" alt="">
 
     
 </body>
